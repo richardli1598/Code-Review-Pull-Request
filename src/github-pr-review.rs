@@ -105,7 +105,7 @@ async fn handler(
     };
 
     let chat_id = format!("PR#{pull_number}");
-    let system = &format!("Please remember not to explain the PR, just highlight the parts that need modification and why. You are a senior software developer. You will review a source code file and its patch related to the subject of \"{}\".", title);
+    let system = &format!("Please remember not to explain the PR. Instead, simply highlight the areas requiring changes and briefly state why. You are a senior software developer. You will review a source code file and its patch related to the subject of \"{}\".", title);
     let mut openai = OpenAIFlows::new();
     openai.set_retry_times(3);
 
@@ -149,8 +149,7 @@ async fn handler(
         Ok(files) => {
             for f in files.items {
                 let filename = &f.filename;
-                if filename.ends_with(".md") || filename.ends_with(".js") ||
-                    filename.ends_with(".css") || filename.ends_with(".html") ||
+                if filename.ends_with(".js") || filename.ends_with(".css") || filename.ends_with(".html") ||
                     filename.ends_with(".htm") || filename.ends_with(".png") ||
                     filename.ends_with(".jpg") || filename.ends_with(".gif") {
                     continue;
