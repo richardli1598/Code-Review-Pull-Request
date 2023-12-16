@@ -20,8 +20,9 @@ use std::env;
 //   the max token size or word count for GPT4 is 8192
 //   the max token size or word count for GPT35Turbo is 4096
 static CHAR_SOFT_LIMIT : usize = 9000;
-static MODEL : ChatModel = ChatModel::GPT35Turbo;
+// static MODEL : ChatModel = ChatModel::GPT35Turbo;
 // static MODEL : ChatModel = ChatModel::GPT4;
+static MODEL : ChatModel = ChatModel::GPT4Turbo;
 
 #[no_mangle]
 #[tokio::main(flavor = "current_thread")]
@@ -104,7 +105,7 @@ async fn handler(
     };
 
     let chat_id = format!("PR#{pull_number}");
-    let system = &format!("You are a senior software developer. You will review a source code file and its patch related to the subject of \"{}\".", title);
+    let system = &format!("Please remember not to explain the PR, just highlight the parts that need modification and why. You are a senior software developer. You will review a source code file and its patch related to the subject of \"{}\".", title);
     let mut openai = OpenAIFlows::new();
     openai.set_retry_times(3);
 
@@ -148,7 +149,10 @@ async fn handler(
         Ok(files) => {
             for f in files.items {
                 let filename = &f.filename;
-                if filename.ends_with(".md") || filename.ends_with(".js") || filename.ends_with(".css") || filename.ends_with(".html") || filename.ends_with(".htm") {
+                if filename.ends_with(".md") || filename.ends_with(".js") ||
+                    filename.ends_with(".css") || filename.ends_with(".html") ||
+                    filename.ends_with(".htm") || filename.ends_with(".png") ||
+                    filename.ends_with(".jpg") || filename.ends_with(".gif") {
                     continue;
                 }
 
@@ -187,6 +191,7 @@ async fn handler(
                     model: MODEL,
                     restart: true,
                     system_prompt: Some(system),
+                    ..ChatOptions::default()
                 };
                 let question = "Review the following source code and look for potential problems. The code might be truncated. So, do NOT comment on the completeness of the source code.\n\n".to_string() + t_file_as_text;
                 match openai.chat_completion(&chat_id, &question, &co).await {
@@ -205,6 +210,7 @@ async fn handler(
                     model: MODEL,
                     restart: false,
                     system_prompt: Some(system),
+                    ..ChatOptions::default()
                 };
                 let patch_as_text = f.patch.unwrap_or("".to_string());
                 let t_patch_as_text = truncate(&patch_as_text, CHAR_SOFT_LIMIT);
